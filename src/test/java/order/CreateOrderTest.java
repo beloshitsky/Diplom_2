@@ -3,6 +3,7 @@ package order;
 import base.OrdersApi;
 import base.UserApi;
 import model.User;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -18,11 +19,14 @@ public class CreateOrderTest {
     private UserApi userApi;
     private String ingredient;
     private List<String> ingredients;
+    private User user;
 
     @Before
     public void setUp() {
         ordersApi = new OrdersApi();
         userApi = new UserApi();
+
+        user = new User("test3003@ya.ru", "test", "TestUser");
 
         ingredients = ordersApi.getIngredients();
         ingredient = String.format("{\"ingredients\": [\"%s\"]}", ingredients.get(0));
@@ -55,7 +59,6 @@ public class CreateOrderTest {
         ordersApi.createOrder(invalidIngredients)
                 .assertThat()
                 .statusCode(SC_INTERNAL_SERVER_ERROR);
-
     }
 
     @Test
@@ -69,7 +72,6 @@ public class CreateOrderTest {
 
     @Test
     public void testCreateOrderWithUserLogin() {
-        User user = new User("test3003@ya.ru", "test", "TestUser");
         userApi.createUser(user);
 
         String token = userApi.getToken(user);
@@ -81,7 +83,12 @@ public class CreateOrderTest {
                 .body("success", equalTo(true));
 
         assertNotNull(ordersApi.getOrders(token));
+    }
 
-        userApi.deleteUser(user);
+    @After
+    public void tearDown() {
+        String token = userApi.getToken(user);
+
+        if (token != null) userApi.deleteUser(user);
     }
 }
